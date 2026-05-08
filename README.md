@@ -1,6 +1,6 @@
 # SilverLining
 
-Android app wrapper for [SilverBullet.md](https://github.com/silverbulletmd/silverbullet) that it
+Android app wrapper for [SilverBullet.md](https://github.com/silverbulletmd/silverbullet) so that it
 can be used offline.
 
 ## Build
