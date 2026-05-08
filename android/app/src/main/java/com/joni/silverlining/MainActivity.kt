@@ -11,6 +11,8 @@ import android.provider.Settings
 import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.net.HttpURLConnection
@@ -30,6 +32,23 @@ class MainActivity : AppCompatActivity() {
         webView.settings.domStorageEnabled = true
         webView.webViewClient = WebViewClient()
         WebView.setWebContentsDebuggingEnabled(true)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Exit ${getString(R.string.app_name)}?")
+                        .setPositiveButton("Exit") { _, _ ->
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+        })
 
         if (!hasStoragePermission()) {
             requestStoragePermission()
