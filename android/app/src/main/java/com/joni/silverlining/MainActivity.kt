@@ -26,14 +26,14 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_NAME = "silverlining"
         private const val KEY_NOTES_PATH = "notesFolderPath"
-        private const val DEFAULT_NOTES_PATH = "/storage/emulated/0/0everything/silverlining"
     }
 
     private var serverProcess: Process? = null
     private val prefs by lazy { getSharedPreferences(PREFS_NAME, MODE_PRIVATE) }
-    private val notesDir: File
-        get() = File(prefs.getString(KEY_NOTES_PATH, DEFAULT_NOTES_PATH)!!)
+    private fun notesDir(): File? =
+        prefs.getString(KEY_NOTES_PATH, null)?.let { File(it) }
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var folderPromptShown = false
 
     private val folderPickerLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -86,14 +86,34 @@ class MainActivity : AppCompatActivity() {
             requestStoragePermission()
             return
         }
-        startServer(webView)
+        setupAndStart()
     }
 
     override fun onResume() {
         super.onResume()
-        if (serverProcess == null && hasStoragePermission()) {
+        if (hasStoragePermission()) setupAndStart()
+    }
+
+    private fun setupAndStart() {
+        if (notesDir() == null) {
+            if (!folderPromptShown) {
+                folderPromptShown = true
+                showFolderSetupDialog()
+            }
+            return
+        }
+        if (serverProcess == null) {
             startServer(findViewById(R.id.webview))
         }
+    }
+
+    private fun showFolderSetupDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Welcome to ${getString(R.string.app_name)}")
+            .setMessage("Pick a folder where your notes will live. You can change this later via the settings button.")
+            .setPositiveButton("Choose folder") { _, _ -> folderPickerLauncher.launch(null) }
+            .setCancelable(false)
+            .show()
     }
 
     override fun onDestroy() {
@@ -115,6 +135,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startServer(webView: WebView) {
+        val notesDir = notesDir() ?: return
         notesDir.mkdirs()
         val binary = File(applicationInfo.nativeLibraryDir, "libsilverbullet.so")
 
