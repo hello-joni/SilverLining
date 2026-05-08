@@ -1,11 +1,26 @@
 import java.io.File
 import java.net.URI
 import java.security.MessageDigest
+import java.util.Properties
 import java.util.zip.ZipInputStream
 
 plugins {
     alias(libs.plugins.android.application)
 }
+
+// --- Signing config helpers ----------------------------------------------
+// Reads keystore path + passwords from keystore.properties (gitignored) for
+// local builds, with a fallback to env vars so the same code path works for
+// CI later. Defined above `android { }` because the `signingConfigs` block
+// needs them at configuration time.
+
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun keystoreProp(key: String): String? =
+    keystoreProps.getProperty(key) ?: System.getenv(key)
 
 android {
     namespace = "com.joni.silverlining"
@@ -35,6 +50,17 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            keystoreProp("storeFile")?.let {
+                storeFile = file(it)
+                storePassword = keystoreProp("storePassword")
+                keyAlias = keystoreProp("keyAlias")
+                keyPassword = keystoreProp("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -42,6 +68,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
