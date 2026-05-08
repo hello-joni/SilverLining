@@ -21,7 +21,10 @@
           android-tools
           android-studio
           glib # provides gsettings, which Android Studio probes at startup
+          jdk17 # required by Gradle/AGP for command-line builds
         ];
+
+        JAVA_HOME = "${pkgs.jdk17.home}";
       };
     };
 }
