@@ -34,8 +34,15 @@ android {
         applicationId = "com.joni.silverlining"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+
+        // Versioning in gradle.properties
+        val silverliningVersion: String by project
+        val parts = silverliningVersion.split(".").map { it.toInt() }
+        require(parts.size == 3) {
+            "silverliningVersion must be MAJOR.MINOR.PATCH (got: $silverliningVersion)"
+        }
+        versionCode = parts[0] * 1_000_000 + parts[1] * 1_000 + parts[2]
+        versionName = silverliningVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
